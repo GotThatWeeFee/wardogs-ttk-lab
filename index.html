@@ -13,7 +13,7 @@ button,select,input{font:inherit}button:focus-visible,select:focus-visible,input
 </style>
 </head>
 <body>
-<header><div class="shell headbar"><div class="brand"><div class="brandmark">W</div><div><span class="smallcaps">Unofficial field tools</span><b>WARDOGS // TTK LAB</b></div></div><div class="rightnav"><span class="pill">SEASON 02 · BUILD CL-516586</span><button id="shareTop" class="ghost primary" type="button">↗ Share setup</button></div></div></header>
+<header><div class="shell headbar"><div class="brand"><div class="brandmark">W</div><div><span class="smallcaps">Unofficial field tools</span><b>WARDOGS // TTK LAB</b></div></div><div class="rightnav"><span class="pill">SEASON 02 · BUILD CL-516586</span><a href="#builder" class="ghost" style="text-decoration:none">⚙ Weapon Builder</a><button id="shareTop" class="ghost primary" type="button">↗ Share setup</button></div></div></header>
 <main class="shell">
 <section class="hero"><div><div class="eyebrow">Weapon intelligence / community database</div><h1>KNOW YOUR <span>TTK.</span></h1><p>Compare infantry weapons by ammunition and body armor. Ranked at 50 meters, upper torso, 100 health, with every number labeled by its evidence level.</p></div><aside><strong>34 weapons</strong>8 classes<br>5 armor tiers<br>3 standard ammunition types</aside></section>
 <section class="panel controls" aria-label="Calculator filters"><div class="controlsTop"><h2>01 / Set your engagement</h2><span>Selections automatically update the table</span></div><div class="filterGrid"><div class="field"><label for="cls">Weapon type</label><select id="cls"><option value="all">All weapon types</option><option value="AR">Assault rifles</option><option value="SMG">Submachine guns</option><option value="LMG">Machine guns</option><option value="DMR">Marksman rifles</option><option value="Sniper">Sniper rifles</option><option value="Shotgun">Shotguns</option><option value="Pistol">Pistols</option><option value="Bow">Bow</option></select></div><div class="field"><label for="ammo">Ammunition</label><select id="ammo"></select></div><div class="field"><label for="armor">Body armor</label><select id="armor"><option value="0">None / Unarmored</option><option value="1">Level 1</option><option value="2">Level 2</option><option value="3">Level 3</option><option value="4">Level 4</option></select></div><div class="field"><label for="search">Find weapon</label><input id="search" type="search" placeholder="Search by name or caliber" autocomplete="off"></div></div></section>
@@ -116,4 +116,5 @@ function init(){const q=new URLSearchParams(location.search);const cls=q.get('cl
 window.WARDOGS_TEST={WEAPONS,calc,ZONE};
 init();
 </script>
+<script src="builder.js"></script>
 </body></html>
