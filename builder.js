@@ -5,7 +5,7 @@ const source=window.WARDOGS_TEST;
 if(!source||!source.WEAPONS)return;
 const G=source.WEAPONS;
 const BASE=window.WARDOGS_BASE_STATS||{};
-const BARREL=window.WARDOGS_FACTORY_BARRELS||{};
+
 const el=id=>document.getElementById(id);
 const safe=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const usd=n=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(n);
@@ -26,7 +26,7 @@ const P=[
 ["stanag20","Magazine","STANAG 20 RND",10,.31,sn,{v:-16,h:-15,ads:-15},"stanag-20-rnd-magazine",20],
 ["stanag30","Magazine","STANAG 30 RND",55,.53,sn,{},"stanag-30-rnd-magazine-5",30],
 ["stanag60","Magazine","STANAG 60 RND",180,1.01,sn,{v:19,h:21,ads:19},"stanag-60-rnd-magazine",60]
-].map(([id,slot,n,price,kg,fit,mods,ref,cap])=>({id,slot,n,price,kg,fit,mods,ref,cap})).concat(window.WARDOGS_EXTRA_PARTS||[]);
+].map(([id,slot,n,price,kg,fit,mods,ref,cap])=>({id,slot,n,price,kg,fit,mods,ref,cap})).concat(window.WARDOGS_EXTRA_PARTS||[],window.WARDOGS_MUZZLE_PARTS||[]);
 // Optic fits are computed from game-file slot filters (shared sights + weapon-specific exceptions).
 // Never fall back to a curated partial list: a missing match means the fit remains unverified.
 const SIGHT_FITS=window.WARDOGS_SIGHT_RULES?.fits||{};
@@ -41,7 +41,7 @@ for(const part of P){
 const MAP=Object.fromEntries(P.map(p=>[p.id,p]));
 const WEIGHTS={"M4":2.92,"M500":3.52,"TCX-SPR":3.5,"AK74":3,"FAL":4.25,"Super-45":3,"Evo-3 Ultra":6.3,"T-21":3.27,"M249 SAW":7.5,"AMP-9":1.4,"MP5":2.54,"BMR-308":3.9,"Galil":3.95,"PP-19 Vityaz":2.9,"PP-19 Bizon":2.1,"PKM":7.5};
 const ADS_BASE={"M4":.49,"M500":.365,"MP43":.35,"M14":.53};
-const SLOTS=["Sight","Barrel","Underbarrel","Magazine"];
+const SLOTS=["Sight","Muzzle","Underbarrel","Magazine"];
 const q=new URLSearchParams(location.search);
 const ST={gun:q.get("buildWeapon")||"M4",parts:{},ammo:null,armor:2};
 if(!G.some(g=>g.n===ST.gun))ST.gun="M4";
@@ -53,6 +53,7 @@ for(const slot of SLOTS){const id=q.get("build"+slot),p=MAP[id];ST.parts[slot]=p
 const hasSingleUnderbarrel=(gun)=>P.filter(part=>part.slot==="Underbarrel"&&part.fit.includes(gun)).length===1;
 const EXPANDED=Object.fromEntries(SLOTS.map(slot=>[slot,slot==="Sight"||Boolean(ST.parts[slot])||(slot==="Underbarrel"&&hasSingleUnderbarrel(ST.gun))]));
 let resetPanelsOnWeaponChange=false;
+let pendingCollapseSlot=null;
 const host=document.createElement("section");
 host.className="panel wb";host.id="builder";host.setAttribute("aria-label","Weapon builder");
 host.innerHTML='<div class="wbHeader"><div><div class="smallcaps">Build and compare</div><h2>WEAPON <span>WORKBENCH</span></h2><p>Weapon selection, sourced compatible attachments, price and handling impact.</p></div><div class="wbButtons"><button type="button" class="ghost" id="wbClear">↺ Clear build</button><button type="button" class="ghost primary" id="wbShare">↗ Share build</button></div></div>'+
@@ -94,7 +95,7 @@ const weapon=()=>G.find(w=>w.n===ST.gun);
 function url(){const u=new URL(location.href);u.hash="builder";u.searchParams.set("buildWeapon",ST.gun);u.searchParams.set("buildAmmo",ST.ammo);u.searchParams.set("buildArmor",String(ST.armor));for(const slot of SLOTS){const k="build"+slot;if(ST.parts[slot])u.searchParams.set(k,ST.parts[slot]);else u.searchParams.delete(k);}return u.href;}
 function sync(){if(location.protocol!=="file:")try{history.replaceState(null,"",url());}catch(e){}}
 const pct=n=>(n>0?"+":"")+n+"%";
-function summary(){const w=weapon(),p=chosen(),mods={v:0,h:0,s:0,ads:0};for(const t of p)for(const k in mods)mods[k]+=t.mods[k]||0;const baseWeight=BASE[w.n]?.weight??WEIGHTS[w.n];return {cost:w.p+p.reduce((n,t)=>n+t.price,0),weight:baseWeight==null?null:baseWeight+p.reduce((n,t)=>n+t.kg,0),mods,p,w};}
+function summary(){const w=weapon(),p=chosen(),mods={v:0,h:0,s:0,ads:0};for(const t of p)for(const k in mods)mods[k]+=t.mods[k]||0;const baseWeight=BASE[w.n]?.weight??WEIGHTS[w.n];return {cost:w.p+p.reduce((n,t)=>n+t.price,0),weight:baseWeight==null||p.some(t=>t.kg==null)?null:baseWeight+p.reduce((n,t)=>n+t.kg,0),mods,p,w};}
 function render(){
  const {cost,weight,mods,p,w}=summary();
  const incomplete=p.some(t=>!t.mods||!Object.keys(t.mods).length);
@@ -123,14 +124,9 @@ function render(){
  if(!resetPanelsOnWeaponChange){
   for(const node of currentDetails)if(SLOTS.includes(node.dataset.wbSlot))EXPANDED[node.dataset.wbSlot]=node.open;
  }
+ if(pendingCollapseSlot){EXPANDED[pendingCollapseSlot]=false;pendingCollapseSlot=null;}
  resetPanelsOnWeaponChange=false;
  el("wbSlots").innerHTML=SLOTS.map(slot=>{
- if(slot==="Barrel"){
-   const part=BARREL[ST.gun],name=part?.name||"Factory barrel (name not extracted)";
-   return '<details class="wbSlot wbCollapsible" data-wb-slot="Barrel" '+(EXPANDED.Barrel?'open':'')+'><summary><span>Barrel</span><span class="wbSlotCount">'+(part?'Factory-fitted':'Not mapped')+'</span></summary><div class="wbSlotContent">'+
-    (part?'<div class="wbOptionWrap wbUnpriced"><div class="wbOption"><span class="wbOptionTitle"><span class="wbOptionName">'+safe(name)+'</span><span class="wbOptionPrice">Included</span></span><span class="wbOptionMeta">Base weapon component · '+safe(part.id||"unlisted ID")+'</span></div></div>':'<p class="wbMuted">No barrel slot data available for this weapon.</p>')+
-    '<p class="wbMuted">Factory-fitted weapon part, not a vendor-selectable barrel upgrade. No verified alternate barrel pricing or stat modifiers are available. Changing this component does not affect the TTK calculation.</p></div></details>';
- }
  const available=options(slot),items=slot==="Sight"?available.filter(p=>OPTIC_BAND==="All"||opticBand(p)===OPTIC_BAND):available,current=ST.parts[slot]||"";
  const labels=[["v","Vertical"],["h","Horizontal"],["s","Spread"],["ads","ADS"]];
  const stock='<button type="button" class="wbStock '+(!current?'active':'')+'" data-part="" data-slot="'+slot+'" aria-pressed="'+(!current)+'">✓ None / Stock</button>';
@@ -178,6 +174,7 @@ el("wbGun").addEventListener("change",e=>{
  // purpose-built underbarrel (e.g. M14 Bipod) rather than inheriting a collapsed
  // state from the previous weapon. Preserve toggles within the same weapon.
  EXPANDED.Sight=true;
+ EXPANDED.Muzzle=false;
  EXPANDED.Underbarrel=hasSingleUnderbarrel(ST.gun);
  EXPANDED.Magazine=false;
  resetPanelsOnWeaponChange=true;
@@ -189,7 +186,7 @@ el("wbSlots").addEventListener("click",e=>{
  const button=e.target.closest('button[data-part]');
  if(!button)return;
  const slot=button.dataset.slot,id=button.dataset.part,p=MAP[id];
- if(SLOTS.includes(slot)){if(p?.listedOnly)return;ST.parts[slot]=p&&p.slot===slot&&p.fit.includes(ST.gun)?id:"";render();}
+ if(SLOTS.includes(slot)){if(p?.listedOnly)return;ST.parts[slot]=p&&p.slot===slot&&p.fit.includes(ST.gun)?id:"";pendingCollapseSlot=slot;render();}
 });
 el("wbAmmo").addEventListener("change",e=>{ST.ammo=e.target.value;render();});
 el("wbArmor").addEventListener("change",e=>{ST.armor=Number(e.target.value);render();});
