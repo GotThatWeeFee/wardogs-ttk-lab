@@ -55,7 +55,25 @@ css.textContent+=' .wbUnpriced{border-style:dashed;opacity:.64}.wbUnpriced .wbOp
 document.head.append(css);
 const anchor=document.querySelector(".footergrid");
 if(anchor)anchor.before(host);else document.querySelector("main").append(host);
-el("wbGun").innerHTML=G.slice().sort((a,b)=>a.c.localeCompare(b.c)||a.n.localeCompare(b.n)).map(w=>'<option value="'+safe(w.n)+'">'+safe(w.n)+' · '+safe(w.c)+'</option>').join("");
+// Group weapons by the same classes used in the main TTK table.
+// Native optgroup labels remain visible in the browser dropdown, including Opera.
+const WEAPON_GROUPS=[
+ ["AR","Assault Rifles"],
+ ["SMG","Submachine Guns"],
+ ["LMG","Light Machine Guns"],
+ ["DMR","Marksman Rifles"],
+ ["Sniper","Sniper Rifles"],
+ ["Shotgun","Shotguns"],
+ ["Pistol","Pistols"],
+ ["Bow","Bows"]
+];
+el("wbGun").innerHTML=WEAPON_GROUPS.map(([weaponClass,groupLabel])=>{
+ const entries=G.filter(w=>w.c===weaponClass).sort((a,b)=>a.n.localeCompare(b.n));
+ if(!entries.length)return "";
+ return '<optgroup label="'+safe(groupLabel)+'">'+entries.map(w=>
+  '<option value="'+safe(w.n)+'">'+safe(w.n)+'</option>'
+ ).join("")+'</optgroup>';
+}).join("");
 el("wbGun").value=ST.gun;
 const options=slot=>P.filter(p=>p.slot===slot&&p.fit.includes(ST.gun));
 const chosen=()=>SLOTS.map(s=>MAP[ST.parts[s]]).filter(p=>p&&!p.listedOnly);
