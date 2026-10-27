@@ -16,6 +16,20 @@ Double-click `index.html` in Chrome, Edge, Firefox, or Safari. No installation, 
 
 > GitHub Pages deployment is not performed automatically by this package. Publishing the repository makes its contents public.
 
+## Weapon builder (new)
+
+Open the **Weapon Builder** link in the website header or jump to `#builder`.
+
+- Choose from the existing weapon catalog and install **curated, directly sourced compatible** sights, underbarrel foregrips and magazines.
+- Compare extracted **individual** recoil, spread and ADS modifiers with a clearly labeled unverified arithmetic stacking preview.
+- See cumulative weapon-plus-attachment cost and total weight where base weapon weight is known.
+- Select ammunition and target armor for an independent **base-weapon** 50 m ballistics reference; attachment handling is **not** applied to STK/TTK.
+- Share a build URL or copy a text parts list. The build state is encoded in URL parameters; no tracking or accounts.
+
+**Coverage limitation:** The curated initial set includes 12 attachment records, rather than all extracted attachments. When exact weapon fit relationships were not present in the game-file extraction (especially muzzles/chokes), the selection is not offered as verified. A missing option does not prove that it is incompatible in the game. Further validation and full attachment coverage remain future work.
+
+Part names/prices/compatibility and individual handling modifiers: [wardo.gs attachments](https://wardo.gs/attachments/) and per-weapon [source pages](https://wardo.gs/weapons/) (CL-516586, extracted October 16, 2026).
+
 ## Filters & features
 
 - Weapon type (8 categories or all)
