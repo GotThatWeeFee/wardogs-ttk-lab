@@ -21,8 +21,10 @@ Double-click `index.html` in Chrome, Edge, Firefox, or Safari. No installation, 
 Open the **Weapon Builder** link in the website header or jump to `#builder`.
 
 - Choose from the existing weapon catalog and install **curated, directly sourced compatible** sights, underbarrel foregrips and magazines.
+- All compatible choices appear as **side-by-side selectable cards**, showing vertical/horizontal recoil, general weapon spread, ADS modifiers, price, weight, magazine capacity (when applicable) and per-part source links without cycling through choices.
+- The **Base weapon stats** panel lists damage, fire rate, effective range, accuracy (MOA), weight, caliber, fire modes and ADS time where individually confirmed. Extraction coverage for range may be blank and ADS time is presently curated for the M4, M500 and MP43; missing data is not guessed.
 - Compare extracted **individual** recoil, spread and ADS modifiers with a clearly labeled unverified arithmetic stacking preview.
-- See cumulative weapon-plus-attachment cost and total weight where base weapon weight is known.
+- See cumulative weapon-plus-attachment cost and total weight for the 34 weapons in our source dataset.
 - Select ammunition and target armor for an independent **base-weapon** 50 m ballistics reference; attachment handling is **not** applied to STK/TTK.
 - Share a build URL or copy a text parts list. The build state is encoded in URL parameters; no tracking or accounts.
 
