@@ -9,12 +9,12 @@ Double-click `index.html` in Chrome, Edge, Firefox, or Safari. No installation, 
 ## Publish to GitHub Pages (free)
 
 1. Create a **public** repository in GitHub, e.g. `wardogs-ttk-lab`.
-2. Upload `index.html` at the **repository root** (using **Add file → Upload files → Commit changes**). The `weapons.json` file is optional and is included for auditing.
+2. Upload `index.html` at the **repository root** (using **Add file → Upload files → Commit changes**). Also upload `base-stats.js`, `expanded-attachments.js`, and `builder.js` into the repository root. All four files are required for the complete site.
 3. Open **Settings → Pages**, then under **Build and deployment** choose **Deploy from a branch**, **main**, and **/(root)**. Save.
 4. GitHub Pages will show the public URL, generally `https://YOUR-USERNAME.github.io/wardogs-ttk-lab/`. Only use the address GitHub actually shows, not the example.
 5. Share the URL in Discord. Visitors can use **Share setup** to copy filter combinations into the same link.
 
-> GitHub Pages deployment is not performed automatically by this package. Publishing the repository makes its contents public.
+> This repository is already published through GitHub Pages and deploys automatically from `main`.
 
 ## Weapon builder (new)
 
@@ -28,7 +28,9 @@ Open the **Weapon Builder** link in the website header or jump to `#builder`.
 - Select ammunition and target armor for an independent **base-weapon** 50 m ballistics reference; attachment handling is **not** applied to STK/TTK.
 - Share a build URL or copy a text parts list. The build state is encoded in URL parameters; no tracking or accounts.
 
-**Coverage limitation:** The curated initial set includes 12 attachment records, rather than all extracted attachments. When exact weapon fit relationships were not present in the game-file extraction (especially muzzles/chokes), the selection is not offered as verified. A missing option does not prove that it is incompatible in the game. Further validation and full attachment coverage remain future work.
+**Coverage limitation:** The builder now includes **72 attachment catalogue records**: 16 optics (two unpriced, view-only), 10 foregrips, and 46 magazines. These cover the confirmed **Galil 16 sights and 2 magazines** from the published weapon page. Some other weapon-specific magazine mappings follow uniquely named game-file entries and should be cross-checked against individual compatible-weapon lists before treating them as definitively proven. Muzzles, chokes, and several internal non-purchasable parts are not modeled. A missing attachment does not prove incompatibility. Records with no listed price are disabled, not represented as free.
+
+Cards use a dash for modifiers not present in the current curated record; that does **not** assert zero gameplay effect. Some magazine and underbarrel effects are not yet transcribed. Stacked build stats are indicative comparisons, not measured values.
 
 Part names/prices/compatibility and individual handling modifiers: [wardo.gs attachments](https://wardo.gs/attachments/) and per-weapon [source pages](https://wardo.gs/weapons/) (CL-516586, extracted October 16, 2026).
 
@@ -39,7 +41,7 @@ Part names/prices/compatibility and individual handling modifiers: [wardo.gs att
 - Body armor: none, Level 1–4
 - Name/caliber search, sortable ranking, weapon details showing all ammo at once
 - CSV export and URL filter sharing
-- Works offline, and all CSS/JS/data are embedded in `index.html`
+- Works offline when the four static site files (`index.html`, `base-stats.js`, `expanded-attachments.js`, `builder.js`) are kept together
 
 ## Data sources & interpretation
 
