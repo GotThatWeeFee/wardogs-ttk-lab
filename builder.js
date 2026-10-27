@@ -28,7 +28,7 @@ const P=[
 ].map(([id,slot,n,price,kg,fit,mods,ref,cap])=>({id,slot,n,price,kg,fit,mods,ref,cap})).concat(window.WARDOGS_EXTRA_PARTS||[]);
 const MAP=Object.fromEntries(P.map(p=>[p.id,p]));
 const WEIGHTS={"M4":2.92,"M500":3.52,"TCX-SPR":3.5,"AK74":3,"FAL":4.25,"Super-45":3,"Evo-3 Ultra":6.3,"T-21":3.27,"M249 SAW":7.5,"AMP-9":1.4,"MP5":2.54,"BMR-308":3.9,"Galil":3.95,"PP-19 Vityaz":2.9,"PP-19 Bizon":2.1,"PKM":7.5};
-const ADS_BASE={"M4":.49,"M500":.365,"MP43":.35};
+const ADS_BASE={"M4":.49,"M500":.365,"MP43":.35,"M14":.53};
 const SLOTS=["Sight","Underbarrel","Magazine"];
 const q=new URLSearchParams(location.search);
 const ST={gun:q.get("buildWeapon")||"M4",parts:{},ammo:null,armor:2};
@@ -38,7 +38,9 @@ ST.ammo=ammoFor(G.find(g=>g.n===ST.gun)).includes(q.get("buildAmmo"))?q.get("bui
 const parsedArmor=Number(q.get("buildArmor"));ST.armor=q.has("buildArmor")&&Number.isInteger(parsedArmor)&&parsedArmor>=0&&parsedArmor<=4?parsedArmor:2;
 for(const slot of SLOTS){const id=q.get("build"+slot),p=MAP[id];ST.parts[slot]=p&&!p.listedOnly&&p.slot===slot&&p.fit.includes(ST.gun)?id:"";}
 // Preserve open sections after each card selection redraw.
-const EXPANDED=Object.fromEntries(SLOTS.map(slot=>[slot,slot==="Sight"||Boolean(ST.parts[slot])]));
+const hasSingleUnderbarrel=(gun)=>P.filter(part=>part.slot==="Underbarrel"&&part.fit.includes(gun)).length===1;
+const EXPANDED=Object.fromEntries(SLOTS.map(slot=>[slot,slot==="Sight"||Boolean(ST.parts[slot])||(slot==="Underbarrel"&&hasSingleUnderbarrel(ST.gun))]));
+let resetPanelsOnWeaponChange=false;
 const host=document.createElement("section");
 host.className="panel wb";host.id="builder";host.setAttribute("aria-label","Weapon builder");
 host.innerHTML='<div class="wbHeader"><div><div class="smallcaps">Build and compare</div><h2>WEAPON <span>WORKBENCH</span></h2><p>Weapon selection, sourced compatible attachments, price and handling impact.</p></div><div class="wbButtons"><button type="button" class="ghost" id="wbClear">↺ Clear build</button><button type="button" class="ghost primary" id="wbShare">↗ Share build</button></div></div>'+
@@ -87,7 +89,10 @@ function render(){
  el("wbCoverage").textContent=totalOptions?pricedOptions+" priced attachment options for this weapon"+(totalOptions>pricedOptions?" ("+(totalOptions-pricedOptions)+" unpriced database entries shown but disabled).":".")+" Every card displays its recorded modifiers.":"No compatible items have been independently mapped for this weapon yet.";
  // Native <details> keeps keyboard support and its open state is captured before rebuilding the cards.
  const currentDetails=el("wbSlots").querySelectorAll?.("details[data-wb-slot]")||[];
- for(const node of currentDetails)if(SLOTS.includes(node.dataset.wbSlot))EXPANDED[node.dataset.wbSlot]=node.open;
+ if(!resetPanelsOnWeaponChange){
+  for(const node of currentDetails)if(SLOTS.includes(node.dataset.wbSlot))EXPANDED[node.dataset.wbSlot]=node.open;
+ }
+ resetPanelsOnWeaponChange=false;
  el("wbSlots").innerHTML=SLOTS.map(slot=>{
  const items=options(slot),current=ST.parts[slot]||"";
  const labels=[["v","Vertical"],["h","Horizontal"],["s","Spread"],["ads","ADS"]];
@@ -125,7 +130,19 @@ function render(){
  sync();
 }
 function copy(s){const ok=()=>{const toast=el("toast");if(toast){toast.textContent="Copied to clipboard";toast.classList.add("show");setTimeout(()=>toast.classList.remove("show"),2400);}};if(navigator.clipboard?.writeText)navigator.clipboard.writeText(s).then(ok).catch(()=>window.prompt("Copy:",s));else window.prompt("Copy:",s);}
-el("wbGun").addEventListener("change",e=>{ST.gun=e.target.value;ST.ammo=ammoFor(weapon())[0];for(const s of SLOTS)ST.parts[s]="";render();});
+el("wbGun").addEventListener("change",e=>{
+ ST.gun=e.target.value;
+ ST.ammo=ammoFor(weapon())[0];
+ for(const slot of SLOTS)ST.parts[slot]="";
+ // Different weapons have different attachment sets. Show sights and any single
+ // purpose-built underbarrel (e.g. M14 Bipod) rather than inheriting a collapsed
+ // state from the previous weapon. Preserve toggles within the same weapon.
+ EXPANDED.Sight=true;
+ EXPANDED.Underbarrel=hasSingleUnderbarrel(ST.gun);
+ EXPANDED.Magazine=false;
+ resetPanelsOnWeaponChange=true;
+ render();
+});
 el("wbSlots").addEventListener("click",e=>{
  const button=e.target.closest('button[data-part]');
  if(!button)return;
