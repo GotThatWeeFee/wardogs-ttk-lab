@@ -16,6 +16,13 @@ Double-click `index.html` in Chrome, Edge, Firefox, or Safari. No installation, 
 
 > This repository is already published through GitHub Pages and deploys automatically from `main`.
 
+## Interface updates
+
+- The ranking opens with **All weapon types** and each gun's standard ammunition, sorted by ascending TTK against Level 2 armor.
+- The table includes a **sortable MOA (Minute of Angle)** column. Smaller MOA indicates tighter mechanical grouping; base MOA is separate from recoil and shotgun pellet dispersion. Invalid/unavailable values are shown as a dash rather than 0 MOA.
+- Each weapon-builder attachment section (Sight, Underbarrel, Magazine) uses a keyboard-accessible, **collapsible disclosure panel**. The Sight panel starts expanded, and the other two begin collapsed; expanded state is retained when switching attachments.
+- Section heading numbers were removed for readability.
+
 ## Weapon builder (new)
 
 Open the **Weapon Builder** link in the website header or jump to `#builder`.
