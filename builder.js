@@ -5,6 +5,7 @@ const source=window.WARDOGS_TEST;
 if(!source||!source.WEAPONS)return;
 const G=source.WEAPONS;
 const BASE=window.WARDOGS_BASE_STATS||{};
+const BARREL=window.WARDOGS_FACTORY_BARRELS||{};
 const el=id=>document.getElementById(id);
 const safe=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const usd=n=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(n);
@@ -37,7 +38,7 @@ for(const part of P){
 const MAP=Object.fromEntries(P.map(p=>[p.id,p]));
 const WEIGHTS={"M4":2.92,"M500":3.52,"TCX-SPR":3.5,"AK74":3,"FAL":4.25,"Super-45":3,"Evo-3 Ultra":6.3,"T-21":3.27,"M249 SAW":7.5,"AMP-9":1.4,"MP5":2.54,"BMR-308":3.9,"Galil":3.95,"PP-19 Vityaz":2.9,"PP-19 Bizon":2.1,"PKM":7.5};
 const ADS_BASE={"M4":.49,"M500":.365,"MP43":.35,"M14":.53};
-const SLOTS=["Sight","Underbarrel","Magazine"];
+const SLOTS=["Sight","Barrel","Underbarrel","Magazine"];
 const q=new URLSearchParams(location.search);
 const ST={gun:q.get("buildWeapon")||"M4",parts:{},ammo:null,armor:2};
 if(!G.some(g=>g.n===ST.gun))ST.gun="M4";
@@ -120,6 +121,12 @@ function render(){
  }
  resetPanelsOnWeaponChange=false;
  el("wbSlots").innerHTML=SLOTS.map(slot=>{
+ if(slot==="Barrel"){
+   const part=BARREL[ST.gun],name=part?.name||"Factory barrel (name not extracted)";
+   return '<details class="wbSlot wbCollapsible" data-wb-slot="Barrel" '+(EXPANDED.Barrel?'open':'')+'><summary><span>Barrel</span><span class="wbSlotCount">'+(part?'Factory-fitted':'Not mapped')+'</span></summary><div class="wbSlotContent">'+
+    (part?'<div class="wbOptionWrap wbUnpriced"><div class="wbOption"><span class="wbOptionTitle"><span class="wbOptionName">'+safe(name)+'</span><span class="wbOptionPrice">Included</span></span><span class="wbOptionMeta">Base weapon component · '+safe(part.id||"unlisted ID")+'</span></div></div>':'<p class="wbMuted">No barrel slot data available for this weapon.</p>')+
+    '<p class="wbMuted">Factory-fitted weapon part, not a vendor-selectable barrel upgrade. No verified alternate barrel pricing or stat modifiers are available. Changing this component does not affect the TTK calculation.</p></div></details>';
+ }
  const items=options(slot),current=ST.parts[slot]||"";
  const labels=[["v","Vertical"],["h","Horizontal"],["s","Spread"],["ads","ADS"]];
  const stock='<button type="button" class="wbStock '+(!current?'active':'')+'" data-part="" data-slot="'+slot+'" aria-pressed="'+(!current)+'">✓ None / Stock</button>';
