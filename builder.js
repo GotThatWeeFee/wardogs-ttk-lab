@@ -26,6 +26,14 @@ const P=[
 ["stanag30","Magazine","STANAG 30 RND",55,.53,sn,{},"stanag-30-rnd-magazine-5",30],
 ["stanag60","Magazine","STANAG 60 RND",180,1.01,sn,{v:19,h:21,ads:19},"stanag-60-rnd-magazine",60]
 ].map(([id,slot,n,price,kg,fit,mods,ref,cap])=>({id,slot,n,price,kg,fit,mods,ref,cap})).concat(window.WARDOGS_EXTRA_PARTS||[]);
+// Optic fits are computed from game-file slot filters (shared sights + weapon-specific exceptions).
+// Never fall back to a curated partial list: a missing match means the fit remains unverified.
+const SIGHT_FITS=window.WARDOGS_SIGHT_RULES?.fits||{};
+for(const part of P){
+ if(part.slot!=="Sight")continue;
+ part.fit=Object.prototype.hasOwnProperty.call(SIGHT_FITS,part.n)?SIGHT_FITS[part.n]:[];
+ part.fitEvidence="cooked slot filter";
+}
 const MAP=Object.fromEntries(P.map(p=>[p.id,p]));
 const WEIGHTS={"M4":2.92,"M500":3.52,"TCX-SPR":3.5,"AK74":3,"FAL":4.25,"Super-45":3,"Evo-3 Ultra":6.3,"T-21":3.27,"M249 SAW":7.5,"AMP-9":1.4,"MP5":2.54,"BMR-308":3.9,"Galil":3.95,"PP-19 Vityaz":2.9,"PP-19 Bizon":2.1,"PKM":7.5};
 const ADS_BASE={"M4":.49,"M500":.365,"MP43":.35,"M14":.53};
@@ -104,7 +112,7 @@ function render(){
  el("wbAmmo").innerHTML=ammoFor(w).map(a=>'<option value="'+a+'">'+({FMJ:"Standard FMJ",AP:"Armor Piercing",HP:"Hollow Point",Buckshot:"12g Buckshot",Slug:"12g Rifled Slug",STD:"Broadhead Arrow"}[a])+'</option>').join("");el("wbAmmo").value=ST.ammo;el("wbArmor").value=String(ST.armor);
  const totalOptions=SLOTS.reduce((n,slot)=>n+options(slot).length,0);
  const pricedOptions=SLOTS.reduce((n,slot)=>n+options(slot).filter(p=>!p.listedOnly&&p.price!=null).length,0);
- el("wbCoverage").textContent=totalOptions?pricedOptions+" priced attachment options for this weapon"+(totalOptions>pricedOptions?" ("+(totalOptions-pricedOptions)+" unpriced database entries shown but disabled).":".")+" Every card displays its recorded modifiers.":"No compatible items have been independently mapped for this weapon yet.";
+ el("wbCoverage").textContent=totalOptions?pricedOptions+" priced attachment options for this weapon"+(totalOptions>pricedOptions?" ("+(totalOptions-pricedOptions)+" unpriced database entries shown but disabled).":".")+" Sight compatibility comes from cooked game-file filter rules; every card displays its recorded modifiers.":"No compatible items have been independently mapped for this weapon yet.";
  // Native <details> keeps keyboard support and its open state is captured before rebuilding the cards.
  const currentDetails=el("wbSlots").querySelectorAll?.("details[data-wb-slot]")||[];
  if(!resetPanelsOnWeaponChange){
