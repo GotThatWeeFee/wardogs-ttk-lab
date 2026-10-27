@@ -4,6 +4,7 @@
 const source=window.WARDOGS_TEST;
 if(!source||!source.WEAPONS)return;
 const G=source.WEAPONS;
+const BASE=window.WARDOGS_BASE_STATS||{};
 const el=id=>document.getElementById(id);
 const safe=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const usd=n=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(n);
@@ -40,10 +41,11 @@ const host=document.createElement("section");
 host.className="panel wb";host.id="builder";host.setAttribute("aria-label","Weapon builder");
 host.innerHTML='<div class="wbHeader"><div><div class="smallcaps">03 / Build and compare</div><h2>WEAPON <span>WORKBENCH</span></h2><p>Weapon selection, sourced compatible attachments, price and handling impact.</p></div><div class="wbButtons"><button type="button" class="ghost" id="wbClear">↺ Clear build</button><button type="button" class="ghost primary" id="wbShare">↗ Share build</button></div></div>'+
 '<div class="wbMain"><div class="wbConfig"><div class="field"><label for="wbGun">Weapon</label><select id="wbGun"></select></div><p id="wbCoverage" class="wbMuted"></p><div class="field wbChoice"><label for="wbAmmo">Loaded ammunition</label><select id="wbAmmo"></select></div><div class="field wbChoice"><label for="wbArmor">Target body armor (TTK reference)</label><select id="wbArmor"><option value="0">No armor</option><option value="1">Level 1</option><option value="2">Level 2</option><option value="3">Level 3</option><option value="4">Level 4</option></select></div><div id="wbSlots"></div><button id="wbCopy" class="ghost" type="button">Copy parts list</button></div>'+
-'<div class="wbResults"><div class="smallcaps">Per-life loadout cost</div><div class="wbCost" id="wbCost"></div><p id="wbCostSub" class="wbMuted"></p><div id="wbTiles" class="wbTiles"></div><div id="wbBallistics" class="wbBallistics"></div><div class="smallcaps">Combined modifier preview</div><div id="wbStats"></div><div id="wbSummary"></div>'+
+'<div class="wbResults"><div class="smallcaps">Per-life loadout cost</div><div class="wbCost" id="wbCost"></div><p id="wbCostSub" class="wbMuted"></p><div id="wbBase" class="wbBase" aria-label="Unmodified weapon statistics"></div><div id="wbTiles" class="wbTiles"></div><div id="wbBallistics" class="wbBallistics"></div><div class="smallcaps">Combined modifier preview</div><div id="wbStats"></div><div id="wbSummary"></div>'+
 '<div class="wbWarning"><b>Testing, not proven:</b> Each individual attachment and fit listed here is supported by the 2026-10-16 extracted database. Summing modifiers across parts is a comparison-only approximation, not an in-game-verified stacking rule. STK/TTK are not changed: handling, recoil, magazine effects on reloads and pellet hit chance require separate testing. Muzzles/chokes are excluded because this extraction does not provide reliable weapon fit mappings.</div></div></div>';
 const css=document.createElement("style");
 css.textContent='.wb{margin:24px 0;overflow:hidden;scroll-margin-top:20px}.wbHeader{padding:25px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;background:#1b302a;border-bottom:1px solid var(--line)}.wbHeader h2{margin:5px 0;font-size:clamp(24px,3vw,40px);letter-spacing:-.04em}.wbHeader h2 span{color:var(--lime)}.wbHeader p,.wbMuted{font-size:12px;color:var(--muted)}.wbButtons{display:flex;gap:9px;flex-wrap:wrap}.wbMain{display:grid;grid-template-columns:1fr 1fr}.wbConfig,.wbResults{padding:24px}.wbConfig{border-right:1px solid var(--line)} .wbChoice{margin-top:13px}.wbChoice select{background:#0c171d;border:1px solid #3a5056;border-radius:10px;color:var(--text);padding:12px;width:100%}.wbBallistics{padding:11px 13px;border:1px solid #36524c;background:#1c3032;margin:8px 0 18px;border-radius:9px;font-size:12px;line-height:1.6}.wbBallistics strong{color:var(--lime)}.wbSlot{margin:19px 0}.wbSlot label{display:flex;justify-content:space-between;gap:10px;font-size:12px;font-weight:800;text-transform:uppercase;color:#cadfdd}.wbSlot small{color:var(--muted);font-weight:500;text-transform:none}.wbSlot select{width:100%;background:#0c171d;border:1px solid #3a5056;border-radius:10px;color:var(--text);padding:12px;margin:6px 0}.wbSlotMeta{color:var(--muted);font-size:11px;min-height:20px}.wbCost{font-size:42px;color:var(--lime);font-weight:850;font-variant-numeric:tabular-nums}.wbTiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:18px 0}.wbTile{background:#1c3032;border:1px solid #36524c;padding:13px 8px;border-radius:10px}.wbTile b{display:block;font-size:18px}.wbTile small{color:var(--muted);font-size:10px}.wbStat{margin:14px 0}.wbLine{display:flex;justify-content:space-between;gap:9px;font-size:12px}.wbGood{color:#bbf391}.wbBad{color:#ffad9e}.wbTrack{height:7px;background:#2c4245;border-radius:6px;margin-top:7px;overflow:hidden}.wbFill{height:100%;background:var(--lime)}.wbWarning{margin-top:18px;padding:14px;border-left:3px solid var(--gold);background:#2a2a24;border-radius:8px;font-size:11px;color:#dcd0b4;line-height:1.6}#wbSummary{font-size:12px;color:var(--muted);line-height:1.8}#wbSummary ul{padding-left:20px}@media(max-width:800px){.wbMain{grid-template-columns:1fr}.wbConfig{border:0;border-bottom:1px solid var(--line)}}@media(max-width:600px){.wbHeader,.wbConfig,.wbResults{padding:16px}.wbTile b{font-size:15px}}';
+css.textContent+= '.wbBase{margin:14px 0 19px;border:1px solid #3a5350;background:#14262c;border-radius:12px;padding:15px}.wbBaseHead{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:7px;margin-bottom:11px}.wbBaseHead h3{font-size:13px;letter-spacing:.09em;text-transform:uppercase;margin:0}.wbBaseHead a{font-size:11px}.wbBaseGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.wbBaseItem{border:1px solid #365047;background:#1a3032;padding:9px 11px;border-radius:7px;min-width:0}.wbBaseItem b{display:block;font-size:16px;overflow-wrap:anywhere}.wbBaseItem small{font-size:10px;color:var(--muted)}.wbBaseNote{font-size:10px;color:var(--muted);margin-top:9px}.wbSlotsHint{font-size:11px;color:var(--muted);margin:0 0 9px}.wbOptionGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.wbOptionWrap{border:1px solid #37504e;border-radius:10px;min-width:0;background:#122329;overflow:hidden}.wbOptionWrap.active{border-color:var(--lime);background:#22372c}.wbOption{width:100%;display:block;cursor:pointer;text-align:left;background:none;border:0;color:var(--text);padding:12px}.wbOption:focus-visible{outline:2px solid var(--lime);outline-offset:-2px}.wbOptionTitle{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}.wbOptionName{font-size:12px;font-weight:800;line-height:1.35;overflow-wrap:anywhere}.wbOptionPrice{font-size:12px;color:var(--lime);white-space:nowrap;font-weight:800}.wbOptionMeta{display:block;font-size:10px;color:var(--muted);margin-top:4px}.wbModGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin-top:10px}.wbMod{display:flex;align-items:center;justify-content:space-between;gap:5px;font-size:10px;padding:5px 6px;border-radius:5px;background:#23373b}.wbMod b{white-space:nowrap}.wbOptionSource{border-top:1px solid #35504c;padding:4px 10px 7px;text-align:right;font-size:10px}.wbStock{font-weight:750;font-size:12px;margin:5px 0 10px;padding:8px 12px;border-radius:8px;border:1px solid #416158;background:#0e2125;color:#d5e3de;cursor:pointer}.wbStock.active{background:#203829;border-color:var(--lime);color:var(--lime)}.wbSlot{margin:20px 0 25px}.wbSlotLegend{font-size:10px;color:var(--muted);margin:5px 0 9px}.wbOptionWrap .wbGood{color:#bdf19d}.wbOptionWrap .wbBad{color:#ffb0a7}@media(max-width:1150px){.wbOptionGrid{grid-template-columns:1fr}}@media(max-width:800px){.wbOptionGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:460px){.wbOptionGrid{grid-template-columns:1fr}}';
 document.head.append(css);
 const anchor=document.querySelector(".footergrid");
 if(anchor)anchor.before(host);else document.querySelector("main").append(host);
@@ -58,14 +60,43 @@ const pct=n=>(n>0?"+":"")+n+"%";
 function summary(){const w=weapon(),p=chosen(),mods={v:0,h:0,s:0,ads:0};for(const t of p)for(const k in mods)mods[k]+=t.mods[k]||0;return {cost:w.p+p.reduce((n,t)=>n+t.price,0),weight:WEIGHTS[w.n]==null?null:WEIGHTS[w.n]+p.reduce((n,t)=>n+t.kg,0),mods,p,w};}
 function render(){
  const {cost,weight,mods,p,w}=summary();
+ const base=BASE[w.n]||{};
+ const showRange=base.range==null?'Not listed':base.range.toLocaleString('en-US')+' m';
+ const showMoa=base.moa==null?'—':base.moa+' MOA';
+ const baseValues=[
+  ['Damage',w.c==='Shotgun'?w.d+' / pellet':String(w.d)],
+  ['Fire rate',w.r==null?'Not listed':w.r.toLocaleString('en-US')+' RPM'],
+  ['Accuracy',showMoa],
+  ['Effective range',showRange],
+  ['Weight',base.weight==null?'Not listed':base.weight.toFixed(2).replace(/0+$/,'').replace(/\.$/,'')+' kg'],
+  ['ADS time',ADS_BASE[w.n]==null?'Not extracted':ADS_BASE[w.n].toFixed(3)+' s'],
+  ['Caliber',base.caliber||w.cal||'Not listed'],
+  ['Fire modes',base.modes||'Not listed']
+ ];
+ el('wbBase').innerHTML='<div class="wbBaseHead"><h3>Base weapon stats</h3><a href="https://wardo.gs/weapons/" target="_blank" rel="noopener noreferrer">Game-file source ↗</a></div>'+
+  '<div class="wbBaseGrid">'+baseValues.map(([label,value])=>'<div class="wbBaseItem"><small>'+safe(label)+'</small><b>'+safe(value)+'</b></div>').join('')+'</div>'+
+  '<div class="wbBaseNote">Unmodified values · CL-516586. Lower MOA means tighter mechanical accuracy. Range is the published effective range, not a hard damage cutoff. ADS is shown only when individually checked.'+(w.c==='Bow'?' Extracted 0 MOA for bow is not a verified arrow grouping.':'')+'</div>';
  el("wbAmmo").innerHTML=ammoFor(w).map(a=>'<option value="'+a+'">'+({FMJ:"Standard FMJ",AP:"Armor Piercing",HP:"Hollow Point",Buckshot:"12g Buckshot",Slug:"12g Rifled Slug",STD:"Broadhead Arrow"}[a])+'</option>').join("");el("wbAmmo").value=ST.ammo;el("wbArmor").value=String(ST.armor);
  const totalOptions=SLOTS.reduce((n,slot)=>n+options(slot).length,0);
- el("wbCoverage").textContent=totalOptions?totalOptions+" confirmed item/weapon fit relationships in this curated build. Select a part to view its extracted modifier.":"No compatible items have been independently mapped for this weapon yet.";
+ el("wbCoverage").textContent=totalOptions?totalOptions+" attachment options mapped for this gun. All sourced modifiers are visible below; choose a card to equip it.":"No compatible items have been independently mapped for this weapon yet.";
  el("wbSlots").innerHTML=SLOTS.map(slot=>{
- const items=options(slot),selected=MAP[ST.parts[slot]];
- const entries=items.map(t=>'<option value="'+safe(t.id)+'" '+(ST.parts[slot]===t.id?'selected':'')+'>'+safe(t.n)+' · '+usd(t.price)+'</option>').join("");
- const mods=selected?Object.entries(selected.mods).map(([k,v])=>({v:"Vertical recoil",h:"Horizontal recoil",s:"Spread",ads:"ADS time"}[k])+": "+pct(v)).join(" · "):"";
- return '<div class="wbSlot"><label for="wb'+slot+'">'+slot+'<small>'+items.length+' fit(s)</small></label><select data-slot="'+slot+'" id="wb'+slot+'" '+(!items.length?'disabled':'')+'><option value="">'+(items.length?"None / stock":"No mapped options")+'</option>'+entries+'</select><div class="wbSlotMeta">'+(selected?safe(mods||"No stat modifier")+' · <a target="_blank" rel="noopener noreferrer" href="https://wardo.gs/items/'+safe(selected.ref)+'/">source ↗</a>':"")+'</div></div>';
+ const items=options(slot),current=ST.parts[slot]||"";
+ const labels=[["v","Vertical"],["h","Horizontal"],["s","Spread"],["ads","ADS"]];
+ const stock='<button type="button" class="wbStock '+(!current?'active':'')+'" data-part="" data-slot="'+slot+'" aria-pressed="'+(!current)+'">✓ None / Stock</button>';
+ const entries=items.map(t=>{
+   const active=t.id===current;
+   const chips=labels.map(([key,title])=>{
+     const n=t.mods[key],mark=n===undefined?'—':pct(n),cls=n===undefined?'':n<0?'wbGood':n>0?'wbBad':'';
+     return '<span class="wbMod"><span>'+title+'</span><b class="'+cls+'">'+mark+'</b></span>';
+   }).join('');
+   return '<div class="wbOptionWrap '+(active?'active':'')+'"><button type="button" class="wbOption" data-slot="'+slot+'" data-part="'+safe(t.id)+'" aria-pressed="'+active+'" aria-label="'+safe('Equip '+t.n)+'">'+
+    '<span class="wbOptionTitle"><span class="wbOptionName">'+(active?'✓ ':'')+safe(t.n)+'</span><span class="wbOptionPrice">'+usd(t.price)+'</span></span>'+
+    '<span class="wbOptionMeta">'+t.kg.toFixed(2)+' kg'+(t.cap?' · '+t.cap+' rounds':'')+'</span><span class="wbModGrid">'+chips+'</span></button>'+
+    '<div class="wbOptionSource"><a target="_blank" rel="noopener noreferrer" href="https://wardo.gs/items/'+safe(t.ref)+'/">Full item stats ↗</a></div></div>';
+ }).join('');
+ return '<div class="wbSlot"><label>'+slot+'<small>'+items.length+' sourced fits</small></label>'+
+  (items.length?'<p class="wbSlotLegend">Negative recoil/spread/ADS = improvement. Dash = modifier not listed.</p>'+stock+
+  '<div class="wbOptionGrid">'+entries+'</div>':'<p class="wbMuted">No verified options mapped for this weapon in this slot.</p>')+'</div>';
  }).join("");
  el("wbCost").textContent=usd(cost);
  el("wbCostSub").textContent="Weapon "+usd(w.p)+" + "+usd(cost-w.p)+" attachments. Excludes unlocks, ammo and gear.";
@@ -83,7 +114,12 @@ function render(){
 }
 function copy(s){const ok=()=>{const toast=el("toast");if(toast){toast.textContent="Copied to clipboard";toast.classList.add("show");setTimeout(()=>toast.classList.remove("show"),2400);}};if(navigator.clipboard?.writeText)navigator.clipboard.writeText(s).then(ok).catch(()=>window.prompt("Copy:",s));else window.prompt("Copy:",s);}
 el("wbGun").addEventListener("change",e=>{ST.gun=e.target.value;ST.ammo=ammoFor(weapon())[0];for(const s of SLOTS)ST.parts[s]="";render();});
-el("wbSlots").addEventListener("change",e=>{const s=e.target.dataset.slot,id=e.target.value,p=MAP[id];if(SLOTS.includes(s)){ST.parts[s]=p&&p.slot===s&&p.fit.includes(ST.gun)?id:"";render();}});
+el("wbSlots").addEventListener("click",e=>{
+ const button=e.target.closest('button[data-part]');
+ if(!button)return;
+ const slot=button.dataset.slot,id=button.dataset.part,p=MAP[id];
+ if(SLOTS.includes(slot)){ST.parts[slot]=p&&p.slot===slot&&p.fit.includes(ST.gun)?id:"";render();}
+});
 el("wbAmmo").addEventListener("change",e=>{ST.ammo=e.target.value;render();});
 el("wbArmor").addEventListener("change",e=>{ST.armor=Number(e.target.value);render();});
 el("wbClear").addEventListener("click",()=>{for(const s of SLOTS)ST.parts[s]="";render();});
