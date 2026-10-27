@@ -28,7 +28,7 @@ const P=[
 ].map(([id,slot,n,price,kg,fit,mods,ref,cap])=>({id,slot,n,price,kg,fit,mods,ref,cap}));
 const MAP=Object.fromEntries(P.map(p=>[p.id,p]));
 const WEIGHTS={"M4":2.92,"M500":3.52,"TCX-SPR":3.5,"AK74":3,"FAL":4.25,"Super-45":3,"Evo-3 Ultra":6.3,"T-21":3.27,"M249 SAW":7.5,"AMP-9":1.4,"MP5":2.54,"BMR-308":3.9,"Galil":3.95,"PP-19 Vityaz":2.9,"PP-19 Bizon":2.1,"PKM":7.5};
-const ADS_BASE={"M4":.49,"M500":.365};
+const ADS_BASE={"M4":.49,"M500":.365,"MP43":.35};
 const SLOTS=["Sight","Underbarrel","Magazine"];
 const q=new URLSearchParams(location.search);
 const ST={gun:q.get("buildWeapon")||"M4",parts:{},ammo:null,armor:2};
@@ -57,7 +57,7 @@ const weapon=()=>G.find(w=>w.n===ST.gun);
 function url(){const u=new URL(location.href);u.hash="builder";u.searchParams.set("buildWeapon",ST.gun);u.searchParams.set("buildAmmo",ST.ammo);u.searchParams.set("buildArmor",String(ST.armor));for(const slot of SLOTS){const k="build"+slot;if(ST.parts[slot])u.searchParams.set(k,ST.parts[slot]);else u.searchParams.delete(k);}return u.href;}
 function sync(){if(location.protocol!=="file:")try{history.replaceState(null,"",url());}catch(e){}}
 const pct=n=>(n>0?"+":"")+n+"%";
-function summary(){const w=weapon(),p=chosen(),mods={v:0,h:0,s:0,ads:0};for(const t of p)for(const k in mods)mods[k]+=t.mods[k]||0;return {cost:w.p+p.reduce((n,t)=>n+t.price,0),weight:WEIGHTS[w.n]==null?null:WEIGHTS[w.n]+p.reduce((n,t)=>n+t.kg,0),mods,p,w};}
+function summary(){const w=weapon(),p=chosen(),mods={v:0,h:0,s:0,ads:0};for(const t of p)for(const k in mods)mods[k]+=t.mods[k]||0;const baseWeight=BASE[w.n]?.weight??WEIGHTS[w.n];return {cost:w.p+p.reduce((n,t)=>n+t.price,0),weight:baseWeight==null?null:baseWeight+p.reduce((n,t)=>n+t.kg,0),mods,p,w};}
 function render(){
  const {cost,weight,mods,p,w}=summary();
  const base=BASE[w.n]||{};
@@ -75,7 +75,7 @@ function render(){
  ];
  el('wbBase').innerHTML='<div class="wbBaseHead"><h3>Base weapon stats</h3><a href="https://wardo.gs/weapons/" target="_blank" rel="noopener noreferrer">Game-file source ↗</a></div>'+
   '<div class="wbBaseGrid">'+baseValues.map(([label,value])=>'<div class="wbBaseItem"><small>'+safe(label)+'</small><b>'+safe(value)+'</b></div>').join('')+'</div>'+
-  '<div class="wbBaseNote">Unmodified values · CL-516586. Lower MOA means tighter mechanical accuracy. Range is the published effective range, not a hard damage cutoff. ADS is shown only when individually checked.'+(w.c==='Bow'?' Extracted 0 MOA for bow is not a verified arrow grouping.':'')+'</div>';
+  '<div class="wbBaseNote">Unmodified values · CL-516586. Lower MOA means tighter mechanical accuracy (not shotgun pellet cone spread). Range is the published effective range, not a hard damage cutoff. ADS is shown only when individually checked.'+(w.c==='Bow'?' Extracted 0 MOA for bow is not a verified arrow grouping.':'')+'</div>';
  el("wbAmmo").innerHTML=ammoFor(w).map(a=>'<option value="'+a+'">'+({FMJ:"Standard FMJ",AP:"Armor Piercing",HP:"Hollow Point",Buckshot:"12g Buckshot",Slug:"12g Rifled Slug",STD:"Broadhead Arrow"}[a])+'</option>').join("");el("wbAmmo").value=ST.ammo;el("wbArmor").value=String(ST.armor);
  const totalOptions=SLOTS.reduce((n,slot)=>n+options(slot).length,0);
  el("wbCoverage").textContent=totalOptions?totalOptions+" attachment options mapped for this gun. All sourced modifiers are visible below; choose a card to equip it.":"No compatible items have been independently mapped for this weapon yet.";
