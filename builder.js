@@ -30,6 +30,9 @@ const P=[
 // Optic fits are computed from game-file slot filters (shared sights + weapon-specific exceptions).
 // Never fall back to a curated partial list: a missing match means the fit remains unverified.
 const SIGHT_FITS=window.WARDOGS_SIGHT_RULES?.fits||{};
+const SIGHT_META=window.WARDOGS_SIGHT_RULES?.meta||{};
+let OPTIC_BAND="All";
+const opticBand=p=>{const category=SIGHT_META[p.n]?.category;if(["Short","Medium","Long"].includes(category))return category;const zoom=p.zoom||1.2;return zoom<=2?"Short":zoom<=4?"Medium":"Long";};
 for(const part of P){
  if(part.slot!=="Sight")continue;
  part.fit=Object.prototype.hasOwnProperty.call(SIGHT_FITS,part.n)?SIGHT_FITS[part.n]:[];
@@ -61,6 +64,7 @@ css.textContent='.wb{margin:24px 0;overflow:hidden;scroll-margin-top:20px}.wbHea
 css.textContent+= '.wbBase{margin:14px 0 19px;border:1px solid #3a5350;background:#14262c;border-radius:12px;padding:15px}.wbBaseHead{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:7px;margin-bottom:11px}.wbBaseHead h3{font-size:13px;letter-spacing:.09em;text-transform:uppercase;margin:0}.wbBaseHead a{font-size:11px}.wbBaseGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.wbBaseItem{border:1px solid #365047;background:#1a3032;padding:9px 11px;border-radius:7px;min-width:0}.wbBaseItem b{display:block;font-size:16px;overflow-wrap:anywhere}.wbBaseItem small{font-size:10px;color:var(--muted)}.wbBaseNote{font-size:10px;color:var(--muted);margin-top:9px}.wbSlotsHint{font-size:11px;color:var(--muted);margin:0 0 9px}.wbOptionGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.wbOptionWrap{border:1px solid #37504e;border-radius:10px;min-width:0;background:#122329;overflow:hidden}.wbOptionWrap.active{border-color:var(--lime);background:#22372c}.wbOption{width:100%;display:block;cursor:pointer;text-align:left;background:none;border:0;color:var(--text);padding:12px}.wbOption:focus-visible{outline:2px solid var(--lime);outline-offset:-2px}.wbOptionTitle{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}.wbOptionName{font-size:12px;font-weight:800;line-height:1.35;overflow-wrap:anywhere}.wbOptionPrice{font-size:12px;color:var(--lime);white-space:nowrap;font-weight:800}.wbOptionMeta{display:block;font-size:10px;color:var(--muted);margin-top:4px}.wbModGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin-top:10px}.wbMod{display:flex;align-items:center;justify-content:space-between;gap:5px;font-size:10px;padding:5px 6px;border-radius:5px;background:#23373b}.wbMod b{white-space:nowrap}.wbOptionSource{border-top:1px solid #35504c;padding:4px 10px 7px;text-align:right;font-size:10px}.wbStock{font-weight:750;font-size:12px;margin:5px 0 10px;padding:8px 12px;border-radius:8px;border:1px solid #416158;background:#0e2125;color:#d5e3de;cursor:pointer}.wbStock.active{background:#203829;border-color:var(--lime);color:var(--lime)}.wbSlot{margin:20px 0 25px}.wbSlotLegend{font-size:10px;color:var(--muted);margin:5px 0 9px}.wbOptionWrap .wbGood{color:#bdf19d}.wbOptionWrap .wbBad{color:#ffb0a7}@media(max-width:1150px){.wbOptionGrid{grid-template-columns:1fr}}@media(max-width:800px){.wbOptionGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:460px){.wbOptionGrid{grid-template-columns:1fr}}';
 css.textContent+=' .wbCollapsible{margin:13px 0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#122128}.wbCollapsible>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 17px;cursor:pointer;color:var(--text);font-size:12px;font-weight:850;letter-spacing:.1em;text-transform:uppercase;background:#1b2e33;user-select:none}.wbCollapsible>summary::-webkit-details-marker{display:none}.wbCollapsible>summary::after{content:"▾";font-size:16px;color:var(--lime);transition:transform .15s}.wbCollapsible:not([open])>summary::after{transform:rotate(-90deg)}.wbCollapsible>summary:hover{background:#243c41}.wbCollapsible>summary:focus-visible{outline:2px solid var(--lime);outline-offset:-2px}.wbSlotCount{margin-left:auto;margin-right:12px;color:var(--muted);font-weight:500;text-transform:none;letter-spacing:0;font-size:11px}.wbSlotContent{padding:12px 14px 17px;border-top:1px solid var(--line)}.wbCollapsible:not([open]){margin-bottom:10px}@media(max-width:460px){.wbSlotCount{font-size:10px;margin-right:5px}}';
 css.textContent+=' .wbUnpriced{border-style:dashed;opacity:.64}.wbUnpriced .wbOption{cursor:not-allowed}.wbUnpriced .wbOptionPrice{color:#b4a9a3}.wbOptionMeta{line-height:1.45}';
+css.textContent+='.wbSightTabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:11px}.wbSightTab{border:1px solid #425f5b;background:#15262e;color:#bbd2cd;border-radius:7px;padding:8px 13px;cursor:pointer;font-size:11px;font-weight:700}.wbSightTab.active,.wbSightTab:hover{background:#324d34;border-color:var(--lime);color:var(--lime)}.wbSightTab:focus-visible{outline:2px solid var(--lime);outline-offset:2px}';
 document.head.append(css);
 const anchor=document.querySelector(".footergrid");
 if(anchor)anchor.before(host);else document.querySelector("main").append(host);
@@ -127,7 +131,7 @@ function render(){
     (part?'<div class="wbOptionWrap wbUnpriced"><div class="wbOption"><span class="wbOptionTitle"><span class="wbOptionName">'+safe(name)+'</span><span class="wbOptionPrice">Included</span></span><span class="wbOptionMeta">Base weapon component · '+safe(part.id||"unlisted ID")+'</span></div></div>':'<p class="wbMuted">No barrel slot data available for this weapon.</p>')+
     '<p class="wbMuted">Factory-fitted weapon part, not a vendor-selectable barrel upgrade. No verified alternate barrel pricing or stat modifiers are available. Changing this component does not affect the TTK calculation.</p></div></details>';
  }
- const items=options(slot),current=ST.parts[slot]||"";
+ const available=options(slot),items=slot==="Sight"?available.filter(p=>OPTIC_BAND==="All"||opticBand(p)===OPTIC_BAND):available,current=ST.parts[slot]||"";
  const labels=[["v","Vertical"],["h","Horizontal"],["s","Spread"],["ads","ADS"]];
  const stock='<button type="button" class="wbStock '+(!current?'active':'')+'" data-part="" data-slot="'+slot+'" aria-pressed="'+(!current)+'">✓ None / Stock</button>';
  const entries=items.map(t=>{
@@ -144,9 +148,11 @@ function render(){
     '<span class="wbOptionMeta">'+safe(meta)+'</span><span class="wbModGrid">'+chips+'</span></button>'+
     '<div class="wbOptionSource"><a target="_blank" rel="noopener noreferrer" href="'+safe(url)+'">Source record ↗</a></div></div>';
  }).join('');
- return '<details class="wbSlot wbCollapsible" data-wb-slot="'+slot+'" '+(EXPANDED[slot]?'open':'')+'><summary><span>'+slot+'</span><span class="wbSlotCount">'+items.length+' mapped option'+(items.length===1?'':'s')+'</span></summary>'+
-  '<div class="wbSlotContent">'+(items.length?'<p class="wbSlotLegend">Negative recoil/spread/ADS = improvement. Dash = no recorded modifier. Unpriced source-only records cannot be equipped.</p>'+stock+
-  '<div class="wbOptionGrid">'+entries+'</div>':'<p class="wbMuted">No verified options mapped for this weapon in this slot.</p>')+'</div></details>';
+ const sightTabs=slot!=="Sight"?"":'<div class="wbSightTabs" aria-label="Optic magnification filters">'+["All","Short","Medium","Long"].map(cat=>
+ '<button type="button" data-optic-band="'+cat+'" class="wbSightTab '+(OPTIC_BAND===cat?'active':'')+'" aria-pressed="'+(OPTIC_BAND===cat)+'">'+cat+'</button>').join("")+'</div>';
+ return '<details class="wbSlot wbCollapsible" data-wb-slot="'+slot+'" '+(EXPANDED[slot]?'open':'')+'><summary><span>'+slot+'</span><span class="wbSlotCount">'+(slot==="Sight"?items.length+"/"+available.length:items.length)+' mapped option'+(available.length===1?'':'s')+'</span></summary>'+
+  '<div class="wbSlotContent">'+sightTabs+(items.length?'<p class="wbSlotLegend">Negative recoil/spread/ADS = improvement. Dash = no recorded modifier. Unpriced source-only records cannot be equipped.</p>'+stock+
+  '<div class="wbOptionGrid">'+entries+'</div>':'<p class="wbMuted">No options in this category for this weapon. Select All to restore the full list.</p>')+'</div></details>';
  }).join("");
  el("wbCost").textContent=usd(cost);
  el("wbCostSub").textContent="Weapon "+usd(w.p)+" + "+usd(cost-w.p)+" attachments. Excludes unlocks, ammo and gear.";
@@ -165,6 +171,7 @@ function render(){
 function copy(s){const ok=()=>{const toast=el("toast");if(toast){toast.textContent="Copied to clipboard";toast.classList.add("show");setTimeout(()=>toast.classList.remove("show"),2400);}};if(navigator.clipboard?.writeText)navigator.clipboard.writeText(s).then(ok).catch(()=>window.prompt("Copy:",s));else window.prompt("Copy:",s);}
 el("wbGun").addEventListener("change",e=>{
  ST.gun=e.target.value;
+ OPTIC_BAND="All";
  ST.ammo=ammoFor(weapon())[0];
  for(const slot of SLOTS)ST.parts[slot]="";
  // Different weapons have different attachment sets. Show sights and any single
@@ -177,6 +184,8 @@ el("wbGun").addEventListener("change",e=>{
  render();
 });
 el("wbSlots").addEventListener("click",e=>{
+ const band=e.target.closest('button[data-optic-band]');
+ if(band){OPTIC_BAND=band.dataset.opticBand;render();return;}
  const button=e.target.closest('button[data-part]');
  if(!button)return;
  const slot=button.dataset.slot,id=button.dataset.part,p=MAP[id];
