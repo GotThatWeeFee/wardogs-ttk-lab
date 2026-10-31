@@ -66,6 +66,7 @@ css.textContent+= '.wbBase{margin:14px 0 19px;border:1px solid #3a5350;backgroun
 css.textContent+=' .wbCollapsible{margin:13px 0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#122128}.wbCollapsible>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 17px;cursor:pointer;color:var(--text);font-size:12px;font-weight:850;letter-spacing:.1em;text-transform:uppercase;background:#1b2e33;user-select:none}.wbCollapsible>summary::-webkit-details-marker{display:none}.wbCollapsible>summary::after{content:"▾";font-size:16px;color:var(--lime);transition:transform .15s}.wbCollapsible:not([open])>summary::after{transform:rotate(-90deg)}.wbCollapsible>summary:hover{background:#243c41}.wbCollapsible>summary:focus-visible{outline:2px solid var(--lime);outline-offset:-2px}.wbSlotCount{margin-left:auto;margin-right:12px;color:var(--muted);font-weight:500;text-transform:none;letter-spacing:0;font-size:11px}.wbSlotContent{padding:12px 14px 17px;border-top:1px solid var(--line)}.wbCollapsible:not([open]){margin-bottom:10px}@media(max-width:460px){.wbSlotCount{font-size:10px;margin-right:5px}}';
 css.textContent+=' .wbUnpriced{border-style:dashed;opacity:.64}.wbUnpriced .wbOption{cursor:not-allowed}.wbUnpriced .wbOptionPrice{color:#b4a9a3}.wbOptionMeta{line-height:1.45}';
 css.textContent+='.wbSightTabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:11px}.wbSightTab{border:1px solid #425f5b;background:#15262e;color:#bbd2cd;border-radius:7px;padding:8px 13px;cursor:pointer;font-size:11px;font-weight:700}.wbSightTab.active,.wbSightTab:hover{background:#324d34;border-color:var(--lime);color:var(--lime)}.wbSightTab:focus-visible{outline:2px solid var(--lime);outline-offset:2px}';
+css.textContent+='.wbMOAExtras{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:0 0 11px}.wbMOAExtras span{display:flex;gap:7px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:9px;border:1px solid #365449;border-radius:7px}.wbMOAExtras small{font-size:10px;color:var(--muted)}.wbMOAExtras strong{font-size:12px;color:var(--text);font-variant-numeric:tabular-nums}@media(max-width:440px){.wbMOAExtras{grid-template-columns:1fr}}';
 css.textContent+='.wbMOA{border:1px solid #4e6c5c;background:linear-gradient(135deg,#19352f,#17282e);padding:15px;border-radius:11px;margin:14px 0 18px}.wbMOAHeader{display:flex;gap:12px;align-items:center;justify-content:space-between}.wbMOAHeader strong{font-size:13px;letter-spacing:.05em;text-transform:uppercase}.wbMOAHeader span{font-size:10px;color:var(--muted)}.wbMOAGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:12px 0}.wbMOAGrid>div{min-width:0;border-radius:8px;border:1px solid #355348;background:#1c3431;padding:10px 8px}.wbMOAGrid small{color:var(--muted);font-size:10px;display:block;line-height:1.4;margin-bottom:5px}.wbMOAGrid strong{font-size:clamp(14px,1.7vw,21px);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.wbMOATotal{color:var(--lime)}.wbMOA p{font-size:11px;line-height:1.6;color:var(--muted);margin:0}.wbMOA a{color:var(--lime)}@media(max-width:390px){.wbMOAGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}';
 document.head.append(css);
 const anchor=document.querySelector(".footergrid");
@@ -117,7 +118,8 @@ function render(){
  const base=BASE[w.n]||{};
  const moa=moaForBuild(w,p);
  const showRange=base.range==null?'Not listed':base.range.toLocaleString('en-US')+' m';
- const showMoa=base.moa==null?'—':base.moa+' MOA';
+ const showMoa=fmtMoa(base.moa);
+ const showRawAccuracy=base.accuracyRaw==null?'Not extracted':base.accuracyRaw+' '+(base.accuracyUnit||'unverified units');
  const baseValues=[
   ['Damage',w.c==='Shotgun'?w.d+' / pellet':String(w.d)],
   ['Fire rate',w.r==null?'Not listed':w.r.toLocaleString('en-US')+' RPM'],
@@ -130,14 +132,14 @@ function render(){
  ];
  el('wbBase').innerHTML='<div class="wbBaseHead"><h3>Base weapon stats</h3><a href="https://wardo.gs/weapons/" target="_blank" rel="noopener noreferrer">Game-file source ↗</a></div>'+
   '<div class="wbBaseGrid">'+baseValues.map(([label,value])=>'<div class="wbBaseItem"><small>'+safe(label)+'</small><b>'+safe(value)+'</b></div>').join('')+'</div>'+
-  '<div class="wbBaseNote">Unmodified values · CL-516586. Lower MOA means tighter underlying per-shot mechanical accuracy in any fire mode (not recoil or shotgun pellet-cone spread). Range is the published effective range, not a hard damage cutoff. ADS is shown only when individually checked.'+(w.c==='Bow'?' Extracted 0 MOA for bow is not a verified arrow grouping.':'')+'</div>';
+  '<div class="wbBaseNote">Unmodified values · CL-516586. Original extracted accuracy: '+safe(showRawAccuracy)+'. Most weapons are recorded in milliradians and converted to MOA; SKS and Deagle are already in MOA. Lower MOA means tighter underlying per-shot mechanical accuracy in any fire mode (not recoil or shotgun pellet-cone spread). Range is the published effective range, not a hard damage cutoff. ADS is shown only when individually checked.'+(w.c==='Bow'?' Extracted 0 MOA for bow is not a verified arrow grouping.':'')+'</div>';
  el("wbMOA").innerHTML='<div class="wbMOAHeader"><strong>Build accuracy (MOA)</strong><span>Lower = tighter</span></div>'+
   '<div class="wbMOAGrid">'+
    '<div><small>Base MOA</small><strong>'+fmtMoa(moa.base)+'</strong></div>'+
    '<div><small>With attachments</small><strong class="wbMOATotal">'+fmtMoa(moa.total)+'</strong></div>'+
    '<div><small>MOA change</small><strong>'+(moa.changePct==null?'—':(Math.abs(moa.changePct)<1e-9?'0%':pct(Number(moa.changePct.toFixed(2)))))+'</strong></div>'+
-  '</div><p>'+ (moa.total==null?'No verified positive base MOA for this weapon. The value is deliberately not calculated.':
-   'Current extracted attachment effects do not modify the game’s mechanical-accuracy multiplier. Recoil, general spread and shotgun pellet pattern are separate; this is not a measured full-auto grouping.')+
+  '</div><div class="wbMOAExtras"><span><small>Fire rate</small><strong>'+(w.r==null?'Not listed':w.r.toLocaleString('en-US')+' RPM')+'</strong></span><span><small>Hip-fire spread preview</small><strong>'+pct(mods.s)+'</strong></span></div><p>'+ (moa.total==null?'No verified positive base MOA for this weapon. The value is deliberately not calculated.':
+   'Game-file accuracy converted to MOA. The recorded attachments do not alter the mechanical-accuracy multiplier. Hip-fire spread is a separate estimated combined modifier and does not change MOA; rate of fire is also unchanged by listed attachments.')+
   ' <a href="https://github.com/Kiyogitpy/wardogs-data-docs/blob/main/pipelines/Wardogs_WeaponSpread_v1.md" target="_blank" rel="noopener noreferrer">How MOA works ↗</a></p>';
  el("wbAmmo").innerHTML=ammoFor(w).map(a=>'<option value="'+a+'">'+({FMJ:"Standard FMJ",AP:"Armor Piercing",HP:"Hollow Point",Buckshot:"12g Buckshot",Slug:"12g Rifled Slug",STD:"Broadhead Arrow"}[a])+'</option>').join("");el("wbAmmo").value=ST.ammo;el("wbArmor").value=String(ST.armor);
  const totalOptions=SLOTS.reduce((n,slot)=>n+options(slot).length,0);
@@ -216,7 +218,7 @@ el("wbAmmo").addEventListener("change",e=>{ST.ammo=e.target.value;render();});
 el("wbArmor").addEventListener("change",e=>{ST.armor=Number(e.target.value);render();});
 el("wbClear").addEventListener("click",()=>{for(const s of SLOTS)ST.parts[s]="";render();});
 el("wbShare").addEventListener("click",()=>copy(url()));
-el("wbCopy").addEventListener("click",()=>{const v=summary();copy([v.w.n+" · WARDOGS TTK Lab","Base MOA: "+fmtMoa(moaForBuild(v.w,v.p).base),"Build MOA: "+fmtMoa(moaForBuild(v.w,v.p).total),"Ammo: "+ST.ammo,"Armor: L"+ST.armor,"Weapon: "+usd(v.w.p),...v.p.map(t=>t.slot+": "+t.n+" ("+usd(t.price)+")"),"Total: "+usd(v.cost),"Attachment stacking: unverified estimate",url()].join("\n"));});
+el("wbCopy").addEventListener("click",()=>{const v=summary();copy([v.w.n+" · WARDOGS TTK Lab","Base MOA: "+fmtMoa(moaForBuild(v.w,v.p).base),"Build MOA: "+fmtMoa(moaForBuild(v.w,v.p).total),"Fire rate: "+(v.w.r==null?"Not listed":v.w.r+" RPM"),"Hip-fire spread preview: "+pct(v.mods.s),"Ammo: "+ST.ammo,"Armor: L"+ST.armor,"Weapon: "+usd(v.w.p),...v.p.map(t=>t.slot+": "+t.n+" ("+usd(t.price)+")"),"Total: "+usd(v.cost),"Attachment stacking: unverified estimate",url()].join("\n"));});
 window.WARDOGS_BUILDER_TEST={parts:P,moaForBuild,compatible:(n,slot)=>P.filter(p=>p.slot===slot&&p.fit.includes(n)),summarize:summary,select:(gun,slot,id)=>{ST.gun=gun;const p=MAP[id];ST.parts[slot]=p&&!p.listedOnly&&p.fit.includes(gun)?id:'';render();return ST.parts[slot];}};
 render();
 })();
